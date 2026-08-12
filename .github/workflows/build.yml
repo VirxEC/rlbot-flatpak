@@ -21,18 +21,26 @@ jobs:
         env:
           GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
           GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+          GPG_KEY_ID: ${{ secrets.GPG_KEY_ID }}
           GPG_KEY_GRIP: ${{ secrets.GPG_KEY_GRIP }}
         run: |
           mkdir -p ~/.gnupg
           echo "allow-preset-passphrase" >> ~/.gnupg/gpg-agent.conf
           gpg-connect-agent reloadagent /bye
           echo "$GPG_PRIVATE_KEY" | base64 -d | gpg --batch --import
-          if command -v gpg-preset-passphrase >/dev/null 2>&1; then
-            PRESET=gpg-preset-passphrase
-          else
-            PRESET=/usr/lib/gnupg2/gpg-preset-passphrase
+          for candidate in gpg-preset-passphrase /usr/libexec/gnupg/gpg-preset-passphrase /usr/lib/gnupg2/gpg-preset-passphrase /usr/lib/gnupg/gpg-preset-passphrase; do
+            if command -v "$candidate" >/dev/null 2>&1 || [ -x "$candidate" ]; then
+              PRESET="$candidate"
+              break
+            fi
+          done
+          if [ -z "$PRESET" ]; then
+            echo "::error::gpg-preset-passphrase not found in PATH or known locations"
+            exit 1
           fi
-          echo "$GPG_PASSPHRASE" | $PRESET --preset "$GPG_KEY_GRIP"
+          echo "$GPG_PASSPHRASE" | "$PRESET" --preset "$GPG_KEY_GRIP"
+          echo "test signing" | gpg --batch --local-user "$GPG_KEY_ID" --detach-sign --output /tmp/gpg-test.sig
+          rm -f /tmp/gpg-test.sig
 
       - uses: flatpak/flatpak-github-actions/flatpak-builder@v6
         with:
