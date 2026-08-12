@@ -1,0 +1,43 @@
+name: Build flatpak
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container:
+      image: bilelmoussaoui/flatpak-github-actions:gnome-50 # keep in sync with runtime-version
+      options: --privileged
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: flatpak/flatpak-github-actions/flatpak-builder@v6
+        with:
+          bundle: org.rlbot.gui.flatpak
+          manifest-path: org.rlbot.gui.yml
+          repo: repo
+          cache-key: flatpak-builder-${{ github.sha }}
+          cache-namespace: flatpak
+
+      - name: Generate repository metadata
+        run: flatpak build-update-repo --generate-static-deltas --prune repo
+
+      - name: Upload bundle to release
+        uses: softprops/action-gh-release@v3
+        with:
+          files: org.rlbot.gui.flatpak
+
+      - name: Publish repository to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./repo
+          publish_branch: gh-pages
+          force_orphan: true
+          enable_jekyll: false

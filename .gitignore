@@ -1,0 +1,5 @@
+/.flatpak-builder
+/build-dir
+/repo
+/target
+/org.rlbot.gui.flatpak

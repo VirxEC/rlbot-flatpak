@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>org.rlbot.gui</id>
+  <name>RLBotGUI</name>
+  <summary>Run custom bots in Rocket League</summary>
+  <metadata_license>MIT</metadata_license>
+  <project_license>MIT</project_license>
+  <description>
+    <p>
+      A launcher for RLBot v5 on Linux. On every launch it downloads the latest
+      RLBotServer and rlbotgui binaries from their GitHub releases, keeps them
+      in sync, starts RLBotServer on the host, and runs the GUI.
+    </p>
+  </description>
+  <launchable type="desktop-id">org.rlbot.gui.desktop</launchable>
+  <url type="homepage">https://rlbot.org</url>
+  <url type="vcs-browser">https://github.com/RLBot/flatpak</url>
+  <releases>
+    <release version="0.1.0" date="2026-08-11"/>
+  </releases>
+</component>

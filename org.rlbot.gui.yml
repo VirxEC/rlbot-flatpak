@@ -1,0 +1,58 @@
+app-id: org.rlbot.gui
+runtime: org.gnome.Platform
+runtime-version: "50"
+sdk: org.gnome.Sdk
+command: rlbot-launcher
+
+# The GNOME SDK doesn't ship a Rust toolchain; the freedesktop rust-stable
+# extension provides cargo/rustc for building the launcher.
+sdk-extensions:
+  - org.freedesktop.Sdk.Extension.rust-stable
+
+# The flatpak provides the sandbox and the WebKitGTK 4.1 / GTK3 runtime
+# libraries that rlbotgui needs. RLBotServer and rlbotgui are downloaded from
+# their GitHub releases by the launcher on every launch, so the pair stays in
+# sync and neither repo's release cadence forces a flatpak rebuild. The only
+# time this flatpak is re-released is when the launcher itself changes.
+
+finish-args:
+  # GitHub API + binary downloads, RocketHost, botpack downloads
+  - --share=network
+  # WebView display
+  - --socket=wayland
+  - --socket=x11
+  - --device=dri
+  # flatpak-spawn --host (RLBotServer must run on the host) and xdg portals
+  - --socket=session-bus
+  - --talk-name=org.freedesktop.Flatpak
+  # bot/script folders picked with zenity; the RLBot5 data dir is the app's
+  # own data dir and is writable without any grant
+  - --filesystem=home
+
+modules:
+  - name: rlbot-launcher
+    buildsystem: simple
+    build-options:
+      network: true # honored by newer builders; ignored by 1.4.2
+      build-args:
+        - --share=network # makes the 1.4.2 build sandbox share the network
+      prepend-path: /usr/lib/sdk/rust-stable/bin
+    build-commands:
+      - cargo build --release
+      - install -Dm755 target/release/rlbot-launcher /app/bin/rlbot-launcher
+      - install -Dm644 org.rlbot.gui.desktop /app/share/applications/org.rlbot.gui.desktop
+      - install -Dm644 org.rlbot.gui.metainfo.xml /app/share/metainfo/org.rlbot.gui.metainfo.xml
+      - install -Dm644 org.rlbot.gui.svg /app/share/icons/hicolor/scalable/apps/org.rlbot.gui.svg
+    sources:
+      - type: dir
+        path: .
+
+  # zenity backs the GUI's file pickers: github.com/ncruces/zenity execs a
+  # `zenity`/`matedialog`/`qarma` binary, so we bundle one. zenity 4.x needs
+  # gtk4 + libadwaita, both present in the GNOME SDK.
+  - name: zenity
+    buildsystem: meson
+    sources:
+      - type: git
+        url: https://gitlab.gnome.org/GNOME/zenity.git
+        tag: 4.2.2

@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=RLBotGUI
+Comment=RLBot v5 - run custom bots in Rocket League
+Exec=rlbot-launcher
+Icon=org.rlbot.gui
+Terminal=true
+Type=Application
+Categories=Game;Utility;
+StartupWMClass=RLBotGUI
