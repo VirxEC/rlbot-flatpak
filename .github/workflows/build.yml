@@ -24,21 +24,48 @@ jobs:
           GPG_KEY_ID: ${{ secrets.GPG_KEY_ID }}
           GPG_KEY_GRIP: ${{ secrets.GPG_KEY_GRIP }}
         run: |
+          umask 077
           mkdir -p ~/.gnupg
-          echo "allow-preset-passphrase" >> ~/.gnupg/gpg-agent.conf
-          gpg-connect-agent reloadagent /bye
+          chmod 700 ~/.gnupg
+
+          # Importing a key does not need the passphrase.
           echo "$GPG_PRIVATE_KEY" | base64 -d | gpg --batch --import
-          for candidate in gpg-preset-passphrase /usr/libexec/gnupg/gpg-preset-passphrase /usr/lib/gnupg2/gpg-preset-passphrase /usr/lib/gnupg/gpg-preset-passphrase; do
-            if command -v "$candidate" >/dev/null 2>&1 || [ -x "$candidate" ]; then
-              PRESET="$candidate"
-              break
-            fi
-          done
+
+          # A fake pinentry supplies the passphrase, so gpg-agent never
+          # opens a dialog. The config and passphrase file stay in
+          # ~/.gnupg, so every later step (flatpak-builder,
+          # build-update-repo) can sign even when a fresh gpg-agent
+          # starts.
+          printf '%s' "$GPG_PASSPHRASE" > ~/.gnupg/gpg-passphrase
+          chmod 600 ~/.gnupg/gpg-passphrase
+          cat > ~/.gnupg/fake-pinentry.sh <<'PINENTRY'
+          #!/bin/sh
+          echo "OK Pleased to meet you"
+          while read -r line; do case "$line" in GETPIN) echo "D $(cat "$HOME/.gnupg/gpg-passphrase")"; echo "OK";; BYE) echo "OK"; exit 0;; *) echo "OK";; esac; done
+          PINENTRY
+          chmod +x ~/.gnupg/fake-pinentry.sh
+          {
+            echo "allow-preset-passphrase"
+            echo "pinentry-program $HOME/.gnupg/fake-pinentry.sh"
+          } > ~/.gnupg/gpg-agent.conf
+
+          # Pre-cache the passphrase with gpg-preset-passphrase when
+          # available. Its location differs per distro (Fedora:
+          # /usr/libexec, Debian: /usr/lib/gnupg2, Arch: /usr/lib/gnupg),
+          # so search for it instead of hardcoding paths.
+          PRESET="$(command -v gpg-preset-passphrase 2>/dev/null || true)"
           if [ -z "$PRESET" ]; then
-            echo "::error::gpg-preset-passphrase not found in PATH or known locations"
-            exit 1
+            PRESET="$(find /usr /opt /usr/local -name gpg-preset-passphrase -type f 2>/dev/null | head -n 1 || true)"
           fi
-          echo "$GPG_PASSPHRASE" | "$PRESET" --preset "$GPG_KEY_GRIP"
+
+          if [ -n "$PRESET" ]; then
+            gpg-connect-agent reloadagent /bye
+            echo "$GPG_PASSPHRASE" | "$PRESET" --preset "$GPG_KEY_GRIP"
+          else
+            gpgconf --kill gpg-agent
+          fi
+
+          # Verify the passphrase works before the long flatpak build.
           echo "test signing" | gpg --batch --local-user "$GPG_KEY_ID" --detach-sign --output /tmp/gpg-test.sig
           rm -f /tmp/gpg-test.sig
 
