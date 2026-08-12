@@ -124,17 +124,8 @@ it installs standalone):
 
 ## Publishing
 
-Source lives at https://github.com/VirxEC/rlbot-flatpak. First push:
-
-    git branch -M main
-    git remote add origin https://github.com/VirxEC/rlbot-flatpak.git
-    git push -u origin main
-
-Then enable GitHub Pages once: Settings → Pages → Source: *Deploy from a
-branch* → Branch: `gh-pages` (root). The workflow creates that branch on the
-first release.
-
-Tag a release (e.g. `v0.1.0`); the `Build flatpak` workflow then:
+The flatpak repo is served to users from the `gh-pages` branch via GitHub
+Pages. Tag a release (e.g. `v0.1.0`); the `Build flatpak` workflow then:
 
 1. Builds `org.rlbot.gui.flatpak` and attaches it to the release.
 2. Exports the ostree repo to the `gh-pages` branch — this is the remote the
@@ -157,6 +148,3 @@ Runs outside a flatpak: downloads to `~/.local/share/RLBot5/bin` and spawns
 the server directly instead of via `flatpak-spawn`. Flags mirror the Windows
 launcher: `--force-update-gui`, `--force-update-server`, `--offline`,
 `--online`.
-
-Note: `cargo build` generates `Cargo.lock` on first run — commit it for
-reproducible builds.

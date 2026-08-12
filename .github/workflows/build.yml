@@ -12,7 +12,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     container:
-      image: bilelmoussaoui/flatpak-github-actions:gnome-50 # keep in sync with runtime-version
+      image: ghcr.io/flathub-infra/flatpak-github-actions:gnome-50 # keep in sync with runtime-version
       options: --privileged
     steps:
       - uses: actions/checkout@v6
@@ -21,9 +21,8 @@ jobs:
         with:
           bundle: org.rlbot.gui.flatpak
           manifest-path: org.rlbot.gui.yml
-          repo: repo
+          repo-dir: repo
           cache-key: flatpak-builder-${{ github.sha }}
-          cache-namespace: flatpak
 
       - name: Generate repository metadata
         run: flatpak build-update-repo --generate-static-deltas --prune repo
