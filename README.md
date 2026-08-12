@@ -10,18 +10,16 @@ the GUI runs inside the sandbox.
 
 ### With updates (recommended)
 
-Add the repo once, then install — the repo is served from GitHub Pages, so
-`flatpak update` picks up new launcher releases automatically:
+Add the repo once, then install — the repo is GPG-signed and served from
+GitHub Pages, so `flatpak update` picks up new launcher releases
+automatically:
 
-    flatpak remote-add --user --if-not-exists --no-gpg-verify rlbot-flatpak https://virxec.github.io/rlbot-flatpak/
+    flatpak remote-add --user --if-not-exists rlbot-flatpak https://raw.githubusercontent.com/VirxEC/rlbot-flatpak/master/org.rlbot.gui.flatpakrepo
     flatpak install --user rlbot-flatpak org.rlbot.gui
 
 Update later with:
 
     flatpak update --user org.rlbot.gui
-
-`--no-gpg-verify` is needed because the repo is not GPG-signed; see
-[Publishing](#publishing) for the trade-off.
 
 ### Single file (no auto-updates)
 
@@ -131,11 +129,13 @@ Pages. Tag a release (e.g. `v0.1.0`); the `Build flatpak` workflow then:
 2. Exports the ostree repo to the `gh-pages` branch — this is the remote the
    "Installing with updates" command above points at.
 
-The repo is unsigned, so users add the remote with `--no-gpg-verify`; anyone
-who can push to `gh-pages` could replace the launcher. The launcher verifies
-the downloaded RLBotServer/rlbotgui binaries against GitHub's release
-sha256 digests, but hardening the repo itself (a GPG signing key in the
-workflow, published in a `.flatpakrepo` file) is a possible follow-up.
+The repo is GPG-signed: the `Build flatpak` workflow signs the exported
+commits and summary using the key stored in the repo secrets
+(`GPG_PRIVATE_KEY`, `GPG_PASSPHRASE`, `GPG_KEY_ID`, `GPG_KEY_GRIP`), and
+flatpak verifies pulls against the public key embedded in
+`org.rlbot.gui.flatpakrepo`. Anyone with write access to the repo still
+controls what gets served, so keeping the signing key (and repo secrets)
+safe matters more than before.
 
 The GUI and server update themselves from GitHub on every launch, so the
 flatpak only needs re-releasing when the launcher changes.

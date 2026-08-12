@@ -17,15 +17,33 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
+      - name: Import GPG signing key
+        env:
+          GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
+          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+          GPG_KEY_GRIP: ${{ secrets.GPG_KEY_GRIP }}
+        run: |
+          mkdir -p ~/.gnupg
+          echo "allow-preset-passphrase" >> ~/.gnupg/gpg-agent.conf
+          gpg-connect-agent reloadagent /bye
+          echo "$GPG_PRIVATE_KEY" | base64 -d | gpg --batch --import
+          if command -v gpg-preset-passphrase >/dev/null 2>&1; then
+            PRESET=gpg-preset-passphrase
+          else
+            PRESET=/usr/lib/gnupg2/gpg-preset-passphrase
+          fi
+          echo "$GPG_PASSPHRASE" | $PRESET --preset "$GPG_KEY_GRIP"
+
       - uses: flatpak/flatpak-github-actions/flatpak-builder@v6
         with:
           bundle: org.rlbot.gui.flatpak
           manifest-path: org.rlbot.gui.yml
           repo-dir: repo
+          gpg-sign: ${{ secrets.GPG_KEY_ID }}
           cache-key: flatpak-builder-${{ github.sha }}
 
       - name: Generate repository metadata
-        run: flatpak build-update-repo --generate-static-deltas --prune repo
+        run: flatpak build-update-repo --gpg-sign=${{ secrets.GPG_KEY_ID }} --generate-static-deltas --prune repo
 
       - name: Upload bundle to release
         uses: softprops/action-gh-release@v3
