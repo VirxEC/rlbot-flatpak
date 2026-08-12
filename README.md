@@ -65,10 +65,7 @@ Install the GNOME runtime and SDK that the manifest pins (`runtime-version`), pl
 
 Notes:
 
-- The first build needs network. It downloads the crates.io dependencies and the zenity source from gitlab.gnome.org.
-- The launcher module uses `build-args: [--share=network]`. The flatpak-builder shipped with Ubuntu 24.04 (1.4.x) ignores the newer `network: true` build-option. You will see a harmless "Unknown property network" warning from that version. Newer flatpak-builder versions honor `network: true` directly, so both are kept in the manifest.
 - `--disable-rofiles-fuse` avoids a dependency on rofiles-fuse when exporting to the local `repo/` directory.
-- Build artifacts (`build-dir/`, `repo/`, `.flatpak-builder/`, `target/`) are gitignored.
 
 ### Install and run
 
@@ -91,7 +88,7 @@ The flatpak repository is served to users from the `gh-pages` branch via GitHub 
 1. Builds `org.rlbot.gui.flatpak` and attaches it to the release.
 2. Exports the ostree repository to the `gh-pages` branch. This is the remote that the "Installing with updates" command above points at.
 
-The repository is GPG-signed. The `Build flatpak` workflow signs the exported commits and summary using the key stored in the repository secrets (`GPG_PRIVATE_KEY`, `GPG_PASSPHRASE`, `GPG_KEY_ID`, `GPG_KEY_GRIP`). Flatpak verifies pulls against the public key embedded in `org.rlbot.gui.flatpakrepo`. Anyone with write access to the repository still controls what gets served. Keeping the signing key and repository secrets safe is therefore critical.
+The repository is GPG-signed. The `Build flatpak` workflow signs the exported commits and summary using the key stored in the repository secrets. Flatpak verifies pulls against the public key embedded in `org.rlbot.gui.flatpakrepo`.
 
 The GUI and server update themselves from GitHub on every launch. The flatpak needs a new release only when the launcher changes.
 
