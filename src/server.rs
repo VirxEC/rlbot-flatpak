@@ -5,7 +5,7 @@
 //! boundary with `flatpak-spawn --host`; outside a flatpak (dev/testing) we
 //! spawn it directly.
 
-use crate::config::{RLBOT_SERVER_BIN_NAME, RLBOT_SERVER_PORT};
+use crate::config::{FLATPAK_SPAWN, RLBOT_SERVER_BIN_NAME, RLBOT_SERVER_PORT};
 use anyhow::{Context, ensure};
 use std::env;
 use std::fs::{self, OpenOptions};
@@ -14,8 +14,6 @@ use std::net::{SocketAddr, TcpStream};
 use std::path::Path;
 use std::process::{Command, Stdio};
 use std::time::Duration;
-
-const FLATPAK_SPAWN: &str = "/usr/bin/flatpak-spawn";
 
 /// True if something is already listening on the RLBot sockets port.
 pub fn is_running() -> bool {

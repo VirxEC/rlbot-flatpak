@@ -1,6 +1,6 @@
 [package]
 name = "rlbot-launcher"
-version = "0.1.0"
+version = "1.0.6"
 edition = "2024"
 description = "RLBot v5 launcher for the org.rlbot.gui flatpak: keeps RLBotServer and rlbotgui in sync from their GitHub releases"
 license = "MIT"

@@ -30,6 +30,10 @@ pub const RLBOT_SERVER_PORT: u16 = 23234;
 /// Name of this launcher's own process, used to track it from the host.
 pub const RLBOT_LAUNCHER_NAME: &str = "rlbot-launcher";
 
+/// Crosses the sandbox boundary to run a command on the host. Only present
+/// inside a flatpak, which is how the code tells the two cases apart.
+pub const FLATPAK_SPAWN: &str = "/usr/bin/flatpak-spawn";
+
 /// Repo names under the `RLBot` GitHub org, used to build the release URLs.
 pub const RLBOT_GUI_REPO_NAME: &str = "gui";
 pub const RLBOT_SERVER_REPO_NAME: &str = "core";

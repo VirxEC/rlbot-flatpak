@@ -3,6 +3,7 @@
 
 mod config;
 mod github;
+mod gpu;
 mod server;
 mod updates;
 
@@ -76,8 +77,13 @@ fn run() -> anyhow::Result<()> {
     }
 
     let gui_path = bin_dir.join(RLBOT_GUI_BIN_NAME);
-    let status = Command::new(&gui_path)
-        .current_dir(env::temp_dir())
+    let mut gui = Command::new(&gui_path);
+    gui.current_dir(env::temp_dir());
+    if gpu::needs_dmabuf_workaround() {
+        info!("NVIDIA driver detected: disabling the WebKitGTK DMA-BUF renderer");
+        gui.env(gpu::DMABUF_RENDERER_ENV, "1");
+    }
+    let status = gui
         .status()
         .with_context(|| format!("Could not run rlbotgui at {gui_path:?}"))?;
     if !status.success() {

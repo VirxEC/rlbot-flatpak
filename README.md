@@ -33,6 +33,20 @@ The launcher and RLBotServer output stream to your terminal when you run `flatpa
 
 When you launch the app from the app grid, the app runs in your system's terminal. The window closes when you close the GUI. On desktops that do not launch `Terminal=true` apps in a terminal, the launcher opens a terminal itself.
 
+### Blank window on NVIDIA
+
+WebKitGTK renders through its DMA-BUF renderer, which misbehaves on the proprietary NVIDIA driver and can leave the GUI blank. The launcher checks for that driver and disables the renderer for the GUI on its own; nothing to do on NVIDIA.
+
+If the window is still blank, the check got your setup wrong and you can set the variable yourself:
+
+    flatpak override --user --env=WEBKIT_DISABLE_DMABUF_RENDERER=1 org.rlbot.gui
+
+To undo that:
+
+    flatpak override --user --unset-env=WEBKIT_DISABLE_DMABUF_RENDERER org.rlbot.gui
+
+The launcher never overrides a variable you set yourself. The check looks for the NVIDIA kernel driver rather than for the GPU the desktop is drawing with, so hybrid laptops may get the workaround even when the session renders on the integrated GPU. That only costs the GUI some rendering speed; it never changes what you see.
+
 ## How updates work
 
 The flatpak itself only contains the launcher and the runtime libraries (WebKitGTK 4.1 / GTK3 from `org.gnome.Platform`). On every launch, the launcher:
@@ -83,7 +97,7 @@ Or create a distributable bundle (annotated with the flathub runtime-repo, so it
 
 ## Publishing
 
-The flatpak repository is served to users from the `gh-pages` branch via GitHub Pages. Tag a release (e.g. `v0.1.0`). The `Build flatpak` workflow then:
+The flatpak repository is served to users from the `gh-pages` branch via GitHub Pages. Tag a release (e.g. `v1.0.6`), after bumping the version in `Cargo.toml` and the `<releases>` entry in `org.rlbot.gui.metainfo.xml` to match. The `Build flatpak` workflow then:
 
 1. Builds `org.rlbot.gui.flatpak` and attaches it to the release.
 2. Exports the ostree repository to the `gh-pages` branch. This is the remote that the "Installing with updates" command above points at.
